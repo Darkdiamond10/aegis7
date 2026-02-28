@@ -76,18 +76,18 @@
 /* ── Anti-Analysis Thresholds ────────────────────────────────────────────── */
 
 /* Granular Control Flags (Comment out to disable individual checks) */        \
-#define AEGIS_AA_ENABLE_PTRACE
-#define AEGIS_AA_ENABLE_TRACER_PID
-#define AEGIS_AA_ENABLE_RDTSC
-#define AEGIS_AA_ENABLE_SLEEP_TIMING
-#define AEGIS_AA_ENABLE_HOSTILE_PROCS
-#define AEGIS_AA_ENABLE_VM_CPUID
-#define AEGIS_AA_ENABLE_VM_MAC
-#define AEGIS_AA_ENABLE_SANDBOX_RESOURCES
-#define AEGIS_AA_ENABLE_CONTAINER
-#define AEGIS_AA_ENABLE_BREAKPOINTS
-#define AEGIS_AA_ENABLE_UPTIME
-#define AEGIS_AA_ENABLE_LD_PRELOAD
+/* #define AEGIS_AA_ENABLE_PTRACE */
+/* #define AEGIS_AA_ENABLE_TRACER_PID */
+/* #define AEGIS_AA_ENABLE_RDTSC */
+/* #define AEGIS_AA_ENABLE_SLEEP_TIMING */
+/* #define AEGIS_AA_ENABLE_HOSTILE_PROCS */
+/* #define AEGIS_AA_ENABLE_VM_CPUID */
+/* #define AEGIS_AA_ENABLE_VM_MAC */
+/* #define AEGIS_AA_ENABLE_SANDBOX_RESOURCES */
+/* #define AEGIS_AA_ENABLE_CONTAINER */
+/* #define AEGIS_AA_ENABLE_BREAKPOINTS */
+/* #define AEGIS_AA_ENABLE_UPTIME */
+/* #define AEGIS_AA_ENABLE_LD_PRELOAD */
 
 #define AEGIS_AA_RDTSC_THRESHOLD 1000000 /* CPU cycles — timing gap  */
 #define AEGIS_AA_SLEEP_CHECK_MS 100      /* Sleep duration for check */

