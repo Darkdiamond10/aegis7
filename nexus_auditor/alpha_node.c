@@ -137,6 +137,8 @@ static aegis_result_t send_ipc_message(int sock_fd, aegis_ipc_cmd_t cmd,
     if (!ct)
       return AEGIS_ERR_ALLOC;
 
+    hdr.payload_len = (uint32_t)len;
+
     aegis_result_t rc =
         aegis_encrypt(g_alpha_crypto, payload, len, (const uint8_t *)&hdr,
                       offsetof(aegis_ipc_header_t, iv), ct, hdr.iv, hdr.tag);
@@ -144,8 +146,6 @@ static aegis_result_t send_ipc_message(int sock_fd, aegis_ipc_cmd_t cmd,
       free(ct);
       return rc;
     }
-
-    hdr.payload_len = (uint32_t)len;
 
     /* Send header + encrypted payload */
     if (send(sock_fd, &hdr, sizeof(hdr), MSG_NOSIGNAL) != sizeof(hdr)) {

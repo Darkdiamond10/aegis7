@@ -138,6 +138,8 @@ static aegis_result_t beta_send_message(aegis_ipc_cmd_t cmd,
     if (!ct)
       return AEGIS_ERR_ALLOC;
 
+    hdr.payload_len = (uint32_t)len;
+
     aegis_result_t rc =
         aegis_encrypt(g_beta_crypto, payload, len, (const uint8_t *)&hdr,
                       offsetof(aegis_ipc_header_t, iv), ct, hdr.iv, hdr.tag);
@@ -146,7 +148,6 @@ static aegis_result_t beta_send_message(aegis_ipc_cmd_t cmd,
       return rc;
     }
 
-    hdr.payload_len = (uint32_t)len;
     send(g_client_fd, &hdr, sizeof(hdr), MSG_NOSIGNAL);
     send(g_client_fd, ct, len, MSG_NOSIGNAL);
     free(ct);
