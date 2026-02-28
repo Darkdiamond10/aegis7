@@ -175,6 +175,7 @@ aegis_result_t aegis_crypto_init(aegis_crypto_ctx_t *ctx, const char *psk_b64) {
 
   /* Derive the master key from PSK */
   const char *info = AEGIS_HKDF_INFO;
+  aegis_result_t rc = AEGIS_ERR_CRYPTO;
   rc = aegis_hkdf_derive(psk_raw, (size_t)psk_len, ctx->hkdf_salt,
                          AEGIS_HKDF_SALT_BYTES, (const uint8_t *)info,
                          strlen(info), ctx->master_key, AEGIS_AES_KEY_BYTES);

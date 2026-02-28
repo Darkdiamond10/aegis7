@@ -53,6 +53,9 @@ class AegisCrypto:
         with a fresh random salt.  Both sides auto-rekey every N messages,
         keeping forward secrecy in sync.
         """
+        self.msg_counter += 1
+        self.total_messages += 1
+
         if self.msg_counter >= self.rekey_threshold:
             import os
             combined = self.session_key + self.master_key
@@ -71,9 +74,6 @@ class AegisCrypto:
             self.msg_counter = 0
 
     def encrypt(self, payload: bytes, aad: bytes = None) -> tuple[bytes, bytes, bytes]:
-        self.msg_counter += 1
-        self.total_messages += 1
-
         import os
         # Match generate_iv logic: first 4 bytes = truncated total_messages, last 8 bytes = random
         ctr = self.total_messages
@@ -94,9 +94,6 @@ class AegisCrypto:
         return ciphertext, iv, tag
 
     def decrypt(self, ciphertext: bytes, iv: bytes, tag: bytes, aad: bytes = None) -> bytes:
-        self.msg_counter += 1
-        self.total_messages += 1
-
         aesgcm = AESGCM(self.session_key)
 
         # Cryptography expects ciphertext + tag
