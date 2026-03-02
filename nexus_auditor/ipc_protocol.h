@@ -57,6 +57,15 @@ typedef struct {
   uint8_t shellcode[]; /* Variable-length shellcode*/
 } AEGIS_PACKED ipc_exec_shellcode_t;
 
+
+/* CMD_EXEC_ELF payload */
+typedef struct {
+  pid_t target_pid;
+  uint32_t elf_len;
+  uint32_t args_len;
+  uint8_t payload[]; /* args (null-terminated string) followed by ELF bytes */
+} AEGIS_PACKED ipc_exec_elf_t;
+
 /* CMD_HOOK_FUNCTION payload */
 typedef struct {
   pid_t target_pid;      /* 0 = broadcast            */

