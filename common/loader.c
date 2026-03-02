@@ -69,8 +69,8 @@ aegis_result_t aegis_exec_from_memory(const uint8_t *binary, size_t len,
   char *const *real_argv = argv ? argv : default_argv;
 
   /* Prepare environment if not provided */
-  char *default_envp[] = {NULL};
-  char *const *real_envp = envp ? envp : default_envp;
+  extern char **environ;
+  char *const *real_envp = envp ? envp : environ;
 
   /*
    * Fork and exec: the child executes the binary from memory.
